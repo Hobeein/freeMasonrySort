@@ -109,7 +109,7 @@
       const correctTops = [current.top]
       for (const over of overlays) {
         let canMove = true
-        if ((current.offsetX > over.offsetX) && ((over.offsetX - current.left_index) <= (current.width_index / 3))) {
+        if ((over.offsetY <= current.offsetY) && (current.offsetX > over.offsetX) && ((over.offsetX - current.left_index) <= (current.width_index / 3))) {
           correctLefts.push(over.offsetX)
           canMove = false
         }
@@ -134,6 +134,13 @@
       const moveOverlays = this.setDraggingElementCorrectPosition(overlays, draggingElement)
       const current = options.ElementPositionMap.get(draggingElement.key)
       for (const moveElm of moveOverlays) {
+        // if ((moveElm.top < (current.top + (current.height / 2))) && ((moveElm.width_index + current.offsetX) <= options.xAxis_grid_total)) {
+        //   moveElm.left_index = current.offsetX
+        //   moveElm.offsetX = current.offsetX + moveElm.width_index
+        // } else {
+        //   moveElm.top = current.offsetY
+        //   moveElm.offsetY = current.offsetY + moveElm.height
+        // }
         moveElm.top = current.offsetY
         moveElm.offsetY = current.offsetY + moveElm.height
         options.ElementPositionMap.set(moveElm.key, moveElm)
