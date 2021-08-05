@@ -11,6 +11,33 @@ window.onload = () => {
 
   $sort.setParentElement(viewBox)
   $sort.setElement(...squares)
+
+  const createNewSquare = document.querySelector('.create-square')
+  createNewSquare.ondragstart = (e) => {
+    e.stopPropagation()
+    e.dataTransfer.setData('dragInfo', 'create_square')
+  }
+  viewBox.ondragover = (e) => {
+    e.preventDefault()
+  }
+  viewBox.ondrop = (e) => {
+    const dragInfo = e.dataTransfer.getData('dragInfo')
+    if (dragInfo === 'create_square') {
+      const bgColor = random_color()
+      const { width, height } = random_width_height(randomMax)
+      const top = (e.clientY - (height / 2))
+      const left = (e.clientX - viewBox.getBoundingClientRect().left - (width / 2))
+      const dragItemList = viewBox.getElementsByClassName('draggable-item')
+      const newSquare = createSquare(width, height, bgColor, dragItemList.length)
+
+      newSquare.style.top = top + 'px'
+      newSquare.style.left = left + 'px'
+
+      appendElementToparent(viewBox, newSquare)
+
+      $sort.addElement(newSquare)
+    }
+  }
 }
 
 // 创造方块

@@ -234,6 +234,10 @@
         util.defaultSort()
       }, 10)
     },
+    addElement(elm) {
+      util.setElementPositionMap(options.ElementPositionMap.size, elm)
+      this.sort()
+    },
     sort(object) {
       let drawObject = null
       if (object) {
