@@ -27,7 +27,7 @@ function createSquare(width, height, bgColor, index = 'index') {
   square.onmousedown = (e) => {
     e.stopPropagation()
     move(e, square, (shadow) => {
-      $sort.sort({ 'elm': square, shadow }) // 阴影
+      $sort.sort({ 'elm': square, shadow })
     }, () => {
       $sort.sort()
     })
@@ -36,7 +36,11 @@ function createSquare(width, height, bgColor, index = 'index') {
   const resizer = createResizeBox(20, 20)
   resizer.onmousedown = (e) => {
     e.stopPropagation()
-    resize(e, square)
+    resize(e, square, (shadow) => {
+      $sort.sort({ 'elm': square, shadow })
+    }, () => {
+      $sort.sort()
+    })
   }
 
   square.appendChild(resizer)

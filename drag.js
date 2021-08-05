@@ -52,7 +52,7 @@ function resize(event, target, movingCallBack, dropCallback) {
       target.style.height = height + 'px'
     }
     if (typeof movingCallBack === 'function') {
-      movingCallBack()
+      movingCallBack(shadow)
     }
   }
   document.onmouseup = (e) => {

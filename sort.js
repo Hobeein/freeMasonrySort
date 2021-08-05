@@ -91,7 +91,6 @@
           break
         }
       }
-      console.log('!!', isOverlay, '!!\n\n')
       return isOverlay
     },
     checkOverlay_oneToOne(obj1, obj2) {
@@ -114,7 +113,7 @@
           correctLefts.push(over.offsetX)
           canMove = false
         }
-        if ((current.offsetY > over.offsetY) && (((over.offsetY - current.top) <= (current.height / 3)) && (over.height > (current.height / 3)))) {
+        if ((current.offsetY > over.offsetY) && ((current.top - over.top) > (over.height / 3))) {
           correctTops.push(over.offsetY)
           canMove = false
         }
