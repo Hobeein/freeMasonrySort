@@ -233,10 +233,12 @@
       setTimeout(() => {
         util.defaultSort()
       }, 10)
+      return this
     },
     addElement(elm) {
       util.setElementPositionMap(options.ElementPositionMap.size, elm)
       this.sort()
+      return this
     },
     sort(object) {
       let drawObject = null
@@ -260,6 +262,7 @@
       util.alignLeft()
       util.alignTop()
       util.draw(drawObject)
+      return this
     }
   }
   this.$sort = api
