@@ -46,35 +46,52 @@
       })
       return Math.max(...correctTops)
     },
-    getOverlayElements(obj) {
-      const elements = []
+    getElementCorrectLeft({ elm, top, height, left_index, width_index, offsetY, offsetX }) {
+      const correctLefts = [((left_index <= 4) ? 0 : left_index)]
       options.ElementPositionMap.forEach((v, k) => {
-        if (obj.key !== k) {
-          if (this.checkOverlay_oneToOne(obj, v)) {
-            elements.push(v)
-          }
+        if ((!(top >= v.offsetY)) && (!(offsetY <= v.top)) && (offsetX > v.offsetX) && ((left_index - v.offsetX) <= 4)) {
+          correctLefts.push(v.offsetX)
         }
       })
+      return Math.max(...correctLefts)
+    },
+    getOverlayElements(obj) {
+      const elements = []
+      const arr = Array.from(options.ElementPositionMap)
+      for (const map of arr) {
+        const k = map[0]
+        const v = map[1]
+        if ((obj.key !== k) && this.checkOverlay_oneToOne(obj, v)) {
+          elements.push(v)
+        }
+      }
       return elements
     },
     checkOverlay_allToAll() {
       let isOverlay = false
-      options.ElementPositionMap.forEach((v, k) => {
+      const arr = Array.from(options.ElementPositionMap)
+      for (const map of arr) {
+        const k = map[0]
+        const v = map[1]
         if (this.checkOverlay_oneToAll(v)) {
           isOverlay = true
+          break
         }
-      })
+      }
       return isOverlay
     },
     checkOverlay_oneToAll(obj) {
       let isOverlay = false
-      options.ElementPositionMap.forEach((v, k) => {
-        if (obj.key !== k) {
-          if (this.checkOverlay_oneToOne(obj, v)) {
-            isOverlay = true
-          }
+      const arr = Array.from(options.ElementPositionMap)
+      for (const map of arr) {
+        const k = map[0]
+        const v = map[1]
+        if ((obj.key !== k) && this.checkOverlay_oneToOne(obj, v)) {
+          isOverlay = true
+          break
         }
-      })
+      }
+      console.log('!!', isOverlay, '!!\n\n')
       return isOverlay
     },
     checkOverlay_oneToOne(obj1, obj2) {
@@ -94,11 +111,11 @@
       for (const over of overlays) {
         let canMove = true
         if ((current.offsetX > over.offsetX) && ((over.offsetX - current.left_index) <= (current.width_index / 3))) {
-          correctLefts.push(over.left_index)
+          correctLefts.push(over.offsetX)
           canMove = false
         }
-        if ((current.offsetY > over.offsetY) && ((over.offsetY - current.top) <= (current.height / 3))) {
-          correctTops.push(over.top)
+        if ((current.offsetY > over.offsetY) && (((over.offsetY - current.top) <= (current.height / 3)) && (over.height > (current.height / 3)))) {
+          correctTops.push(over.offsetY)
           canMove = false
         }
         canMove && moveOverlays.push(over)
@@ -117,24 +134,16 @@
       const overlays = this.getOverlayElements(draggingElement)
       const moveOverlays = this.setDraggingElementCorrectPosition(overlays, draggingElement)
       const current = options.ElementPositionMap.get(draggingElement.key)
-
       for (const moveElm of moveOverlays) {
-        if ((moveElm.top < (current.top + (current.height / 2))) && ((moveElm.width_index + current.offsetX) <= options.xAxis_grid_total)) {
-          moveElm.left_index = current.offsetX
-          moveElm.offsetX = current.offsetX + moveElm.width_index
-        } else {
-          moveElm.top = current.offsetY
-          moveElm.offsetY = current.offsetY + moveElm.height
-        }
+        moveElm.top = current.offsetY
+        moveElm.offsetY = current.offsetY + moveElm.height
         options.ElementPositionMap.set(moveElm.key, moveElm)
         if (this.checkOverlay_oneToAll(moveElm)) {
           this.moveOverlayElements(moveElm)
         }
       }
       if (this.checkOverlay_oneToAll(current)) {
-        return this.moveOverlayElements(current)
-      } else {
-        return
+        this.moveOverlayElements(current)
       }
     },
     alignTop() {
@@ -153,6 +162,14 @@
     },
     alignLeft() {
       const map_arr = this.sortByTopLeftOffsetX()
+      for (const eMap of map_arr) {
+        const key = eMap[0]
+        const value = eMap[1]
+        const correctLeft = this.getElementCorrectLeft(value)
+        value.left_index = correctLeft
+        value.offsetX = correctLeft + value.width_index
+        options.ElementPositionMap.set(key, value)
+      }
     },
     defaultSort() {
       let offsetX_count = 0
@@ -218,23 +235,28 @@
         util.defaultSort()
       }, 10)
     },
-    sort(elm, shadow) {
-      const { rect, top, left, width, height } = getElementRectInfo(elm)
-      const vIter = options.ElementPositionMap.values()
-      let map_value = null
-      do {
-        map_value = vIter.next().value
-        if (!map_value) {
-          break
-        } else if (map_value.elm === elm) {
-          util.setElementPositionMap(map_value.key, elm)
-          const value = options.ElementPositionMap.get(map_value.key)
-          util.moveOverlayElements(value)
-          util.alignTop()
-          util.draw({ 'key': value.key, shadow })
-          break
-        }
-      } while (map_value)
+    sort(object) {
+      let drawObject = null
+      if (object) {
+        const { rect, top, left, width, height } = getElementRectInfo(object.elm)
+        const vIter = options.ElementPositionMap.values()
+        let map_value = null
+        do {
+          map_value = vIter.next().value
+          if (!map_value) {
+            break
+          } else if (map_value.elm === object.elm) {
+            util.setElementPositionMap(map_value.key, object.elm)
+            const value = options.ElementPositionMap.get(map_value.key)
+            util.moveOverlayElements(value)
+            drawObject = { 'key': value.key, 'shadow': object.shadow }
+            break
+          }
+        } while (map_value)
+      }
+      util.alignLeft()
+      util.alignTop()
+      util.draw(drawObject)
     }
   }
   this.$sort = api

@@ -27,7 +27,9 @@ function createSquare(width, height, bgColor, index = 'index') {
   square.onmousedown = (e) => {
     e.stopPropagation()
     move(e, square, (shadow) => {
-      $sort.sort(square, shadow) // 阴影
+      $sort.sort({ 'elm': square, shadow }) // 阴影
+    }, () => {
+      $sort.sort()
     })
   }
 

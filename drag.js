@@ -1,20 +1,32 @@
 // Event
 function move(event, target, movingCallBack, dropCallback) {
-  const { targetParent, targetParentRect, itemWidth, MaxWidth, shadow } = getTargetInfo_And_createShadow(target)
+  const { targetPosition, targetParent, targetParentRect, targetWidth, MaxWidth, shadow } = getTargetInfo_And_createShadow(target)
   const oldOffsetX = event.offsetX
   const oldOffsetY = event.offsetY
   target.style.zIndex = 2
+
+  let oldTop = targetPosition.yop
+  let oldLeft = targetPosition.left
   document.onmousemove = (e) => {
     const left = e.clientX - oldOffsetX - targetParentRect.left
     const top = e.clientY - oldOffsetY - targetParentRect.top + targetParent.scrollTop
-    if (left >= 0 && (left + itemWidth) <= MaxWidth) {
+    if (left >= 0 && (left + targetWidth) <= MaxWidth) {
       target.style.left = left + 'px'
     }
     if (top >= 0) {
       target.style.top = top + 'px'
     }
     if (typeof movingCallBack === 'function') {
-      movingCallBack(shadow)
+      let isPositionChange = false
+      if (Math.abs(left - oldLeft) > 30) {
+        isPositionChange = true
+        oldLeft = left
+      }
+      if (Math.abs(top - oldTop) > 30) {
+        isPositionChange = true
+        oldTop = top
+      }
+      isPositionChange && movingCallBack(shadow)
     }
   }
   document.onmouseup = (e) => {
@@ -59,27 +71,27 @@ function getTargetInfo_And_createShadow(target) {
   const targetParent = target.parentElement
   const targetRect = target.getBoundingClientRect()
   const targetParentRect = targetParent.getBoundingClientRect()
-  const itemTop = Number.parseInt(target.style.top)
-  const itemLeft = Number.parseInt(target.style.left)
-  const itemWidth = targetRect.width
-  const itemHeight = targetRect.height
+  const targetTop = Number.parseInt(target.style.top)
+  const targetLeft = Number.parseInt(target.style.left)
+  const targetWidth = targetRect.width
+  const targetHeight = targetRect.height
   const MaxWidth = targetParentRect.width
   const MaxHeight = targetParent.scrollHeight
   const shadow = document.createElement('div')
   shadow.classList.add('shadow')
   shadow.style.position = 'absolute'
-  shadow.style.top = itemTop + 'px'
-  shadow.style.left = itemLeft + 'px'
-  shadow.style.width = itemWidth + 'px'
-  shadow.style.height = itemHeight + 'px'
+  shadow.style.top = targetTop + 'px'
+  shadow.style.left = targetLeft + 'px'
+  shadow.style.width = targetWidth + 'px'
+  shadow.style.height = targetHeight + 'px'
   shadow.style.border = 'thin #4E4A44 dashed'
   shadow.style.borderRadius = '0px'
   targetParent.appendChild(shadow)
-  const shadow_status = {
-    'top': itemTop,
-    'left': itemLeft,
-    'width': itemWidth + 12,
-    'height': itemHeight + 12
+  const targetPosition = {
+    'top': targetTop,
+    'left': targetLeft,
+    'width': targetWidth,
+    'height': targetHeight
   }
-  return { targetRect, targetParent, targetParentRect, itemWidth, MaxWidth, MaxHeight, shadow, shadow_status }
+  return { targetRect, targetPosition, targetParent, targetParentRect, targetWidth, MaxWidth, MaxHeight, shadow }
 }
