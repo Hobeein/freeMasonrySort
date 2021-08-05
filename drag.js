@@ -14,7 +14,7 @@ function move(event, target, movingCallBack, dropCallback) {
       target.style.top = top + 'px'
     }
     if (typeof movingCallBack === 'function') {
-      movingCallBack()
+      movingCallBack(shadow)
     }
   }
   document.onmouseup = (e) => {

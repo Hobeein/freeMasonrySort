@@ -26,7 +26,9 @@ function createSquare(width, height, bgColor, index = 'index') {
   square.style.zIndex = 1
   square.onmousedown = (e) => {
     e.stopPropagation()
-    move(e, square)
+    move(e, square, (shadow) => {
+      $sort.sort(square, shadow)
+    })
   }
 
   const resizer = createResizeBox(20, 20)

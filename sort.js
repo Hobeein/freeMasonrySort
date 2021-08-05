@@ -46,6 +46,17 @@
       })
       return Math.max(...correctTops)
     },
+    getOverlayElements(obj) {
+      const elements = []
+      options.ElementPositionMap.forEach((v, k) => {
+        if (obj.key !== k) {
+          if (this.checkOverlay_oneToOne(obj, v)) {
+            elements.push(v)
+          }
+        }
+      })
+      return elements
+    },
     checkOverlay_allToAll() {
       let isOverlay = false
       options.ElementPositionMap.forEach((v, k) => {
@@ -76,6 +87,56 @@
       // debugger
       return ((obj1.left_index < obj2.offsetX) && (obj1.offsetX > obj2.left_index) && (obj1.top < obj2.offsetY) && (obj1.offsetY > obj2.top))
     },
+    setDraggingElementCorrectPosition(overlays, current) {
+      const moveOverlays = []
+      const correctLefts = [current.left_index]
+      const correctTops = [current.top]
+      for (const over of overlays) {
+        let canMove = true
+        if ((current.offsetX > over.offsetX) && ((over.offsetX - current.left_index) <= (current.width_index / 3))) {
+          correctLefts.push(over.left_index)
+          canMove = false
+        }
+        if ((current.offsetY > over.offsetY) && ((over.offsetY - current.top) <= (current.height / 3))) {
+          correctTops.push(over.top)
+          canMove = false
+        }
+        canMove && moveOverlays.push(over)
+      }
+      const correctLeft = Math.max(...correctLefts)
+      const correctTop = Math.max(...correctTops)
+      current.top = correctTop
+      current.left_index = correctLeft
+      current.offsetY = correctTop + current.height
+      current.offsetX = correctLeft + current.width_index
+      options.ElementPositionMap.set(current.key, current)
+
+      return moveOverlays
+    },
+    moveOverlayElements(draggingElement) {
+      const overlays = this.getOverlayElements(draggingElement)
+      const moveOverlays = this.setDraggingElementCorrectPosition(overlays, draggingElement)
+      const current = options.ElementPositionMap.get(draggingElement.key)
+
+      for (const moveElm of moveOverlays) {
+        if ((moveElm.top < (current.top + (current.height / 2))) && ((moveElm.width_index + current.offsetX) <= options.xAxis_grid_total)) {
+          moveElm.left_index = current.offsetX
+          moveElm.offsetX = current.offsetX + moveElm.width_index
+        } else {
+          moveElm.top = current.offsetY
+          moveElm.offsetY = current.offsetY + moveElm.height
+        }
+        options.ElementPositionMap.set(moveElm.key, moveElm)
+        if (this.checkOverlay_oneToAll(moveElm)) {
+          this.moveOverlayElements(moveElm)
+        }
+      }
+      if (this.checkOverlay_oneToAll(current)) {
+        return this.moveOverlayElements(current)
+      } else {
+        return
+      }
+    },
     alignTop() {
       const map_arr = this.sortByTopLeftOffsetX()
       for (const eMap of map_arr) {
@@ -87,10 +148,7 @@
         options.ElementPositionMap.set(key, value)
       }
       if (this.checkOverlay_allToAll()) {
-        return this.alignTop()
-      } else {
-        this.draw()
-        return
+        this.alignTop()
       }
     },
     alignLeft() {
@@ -116,19 +174,26 @@
         // console.log(v)
       })
       this.alignTop()
+      this.draw()
     },
-    draw() {
+    draw(obj) {
       options.ElementPositionMap.forEach((v, k) => {
-        v.elm.style.transition = 'all .3s'
         const left = v.left_index * options.grid_width
         const width = v.width_index * options.grid_width
-        v.elm.style.top = v.top + 'px'
-        v.elm.style.left = left + 'px'
-        v.elm.style.width = width + 'px',
-          v.elm.style.height = v.height + 'px'
+        let htmlElm = null
+        if (obj && obj.key === k) {
+          htmlElm = obj.shadow
+        } else {
+          htmlElm = v.elm
+        }
+        htmlElm.style.transition = 'all .3s'
+        htmlElm.style.top = v.top + 'px'
+        htmlElm.style.left = left + 'px'
+        htmlElm.style.width = width + 'px',
+          htmlElm.style.height = v.height + 'px'
 
         setTimeout(() => {
-          v.elm.style.transition = 'unset'
+          htmlElm.style.transition = 'unset'
         }, 300)
       })
     }
@@ -152,6 +217,24 @@
       setTimeout(() => {
         util.defaultSort()
       }, 10)
+    },
+    sort(elm, shadow) {
+      const { rect, top, left, width, height } = getElementRectInfo(elm)
+      const vIter = options.ElementPositionMap.values()
+      let map_value = null
+      do {
+        map_value = vIter.next().value
+        if (!map_value) {
+          break
+        } else if (map_value.elm === elm) {
+          util.setElementPositionMap(map_value.key, elm)
+          const value = options.ElementPositionMap.get(map_value.key)
+          util.moveOverlayElements(value)
+          util.alignTop()
+          util.draw({ 'key': value.key, shadow })
+          break
+        }
+      } while (map_value)
     }
   }
   this.$sort = api
